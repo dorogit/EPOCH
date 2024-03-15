@@ -1,15 +1,14 @@
-# Importing necessary modules required
 import os
 
+import openai
 import speech_recognition as sr
+import whisper
 from deep_translator import GoogleTranslator
 from gtts import gTTS
 from playsound import playsound
 
-flag = 0
-
 # A tuple containing all the language and
-# codes of the language will be detcted
+# codes of the language will be detected
 dic = (
     "afrikaans",
     "af",
@@ -226,6 +225,21 @@ dic = (
 )
 
 
+def audio_to_text_whisper(audio_path):
+    print("called")
+    model = whisper.load_model("base")
+    audio = whisper.load_audio(audio_path)
+    audio = whisper.pad_or_trim(audio)
+    mel = whisper.log_mel_spectrogram(audio).to(model.device)
+    _, probs = model.detect_language(mel)
+    print(f"Detected language: {max(probs, key=probs.get)}")
+    options = whisper.DecodingOptions()
+    result = whisper.decode(model, mel, options)
+
+    # print the recognized text
+    return result.text
+
+
 # Capture Voice
 # takes command through microphone
 def takecommand():
@@ -234,10 +248,13 @@ def takecommand():
         print("listening.....")
         r.pause_threshold = 1
         audio = r.listen(source)
+        # writing the audio file
+        with open("audio.mp3", "wb") as f:
+            f.write(audio.get_wav_data())
 
     try:
         print("Recognizing.....")
-        query = r.recognize_google(audio, language="en-in")
+        query = audio_to_text_whisper("audio.mp3")
         print(f"The User said {query}\n")
     except Exception as e:
         print(e)
@@ -280,16 +297,15 @@ while to_lang not in dic:
 
 to_lang = dic[dic.index(to_lang) + 1]
 
-
 # invoking Translator
 translator = GoogleTranslator()
-
 
 # Translating from src to dest
 translated_text = translator.translate(query, target=to_lang)
 
 text = translated_text
 print(text)
+
 # Using Google-Text-to-Speech ie, gTTS() method
 # to speak the translated text into the
 # destination language which is stored in to_lang.
@@ -303,7 +319,9 @@ speak.save("captured_voice.mp3")
 
 # Using OS module to run the translated voice.
 playsound("captured_voice.mp3")
-os.remove("captured_voice.mp3")
 
 # Printing Output
 print(text)
+
+
+# Now, we can use the audio_to_text_whisper function to get the recognized text from
