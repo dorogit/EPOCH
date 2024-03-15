@@ -2,7 +2,7 @@
 import os
 
 import speech_recognition as sr
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 from gtts import gTTS
 from playsound import playsound
 
@@ -240,6 +240,7 @@ def takecommand():
         query = r.recognize_google(audio, language="en-in")
         print(f"The User said {query}\n")
     except Exception as e:
+        print(e)
         print("say that again please.....")
         return "None"
     return query
@@ -281,14 +282,14 @@ to_lang = dic[dic.index(to_lang) + 1]
 
 
 # invoking Translator
-translator = Translator()
+translator = GoogleTranslator()
 
 
 # Translating from src to dest
-text_to_translate = translator.translate(query, dest=to_lang)
+translated_text = translator.translate(query, target=to_lang)
 
-text = text_to_translate.text
-
+text = translated_text
+print(text)
 # Using Google-Text-to-Speech ie, gTTS() method
 # to speak the translated text into the
 # destination language which is stored in to_lang.
